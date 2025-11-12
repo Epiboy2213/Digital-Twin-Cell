@@ -10,6 +10,12 @@ import {
 } from "lucide-react";
 import Tumor3D from "./components/Tumor3D.jsx";
 
+/* NEW: auth + db + routing */
+import { useAuth } from "./contexts/AuthContext.jsx";
+import { db } from "./lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { Link, useNavigate } from "react-router-dom";
+
 /* ------------------ helpers ------------------ */
 function downloadCSV(filename, rows) {
   const header = Object.keys(rows[0] || {}).join(",");
@@ -143,7 +149,10 @@ export default function App() {
       compare: "เปรียบเทียบรูปแบบยา",
       blue: "ไวต่อยา (น้ำเงิน)",
       orange: "ดื้อยา (ส้ม)",
-      gray: "ตาย (เทา)"
+      gray: "ตาย (เทา)",
+      signInToSave: "ลงชื่อเข้าใช้เพื่อบันทึก",
+      saveRun: "บันทึกการจำลองขึ้นคลาวด์",
+      signedInAs: "ลงชื่อเข้าใช้เป็น"
     },
     en: {
       appTitle: "Cellular Digital Twin",
@@ -167,7 +176,10 @@ export default function App() {
       compare: "Compare View",
       blue: "Sensitive (Blue)",
       orange: "Resistant (Orange)",
-      gray: "Dead (Gray)"
+      gray: "Dead (Gray)",
+      signInToSave: "Sign in to save",
+      saveRun: "Save run to cloud",
+      signedInAs: "Signed in as"
     }
   };
 
@@ -240,6 +252,27 @@ export default function App() {
   const dPct = (dCount / totalNow) * 100;
   const fmt = (n) => (Number.isFinite(n) ? Math.round(n).toLocaleString() : "0");
 
+  /* NEW: Auth hooks + navigation + save method */
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function saveCurrentRun() {
+    if (!user) { navigate("/login"); return; }
+    const doc = {
+      uid: user.uid,
+      createdAt: Date.now(),
+      params: { scenario: scenario, mode: mode, dose: dose, halfLife: halfLife, IC50: IC50, Emax: Emax },
+      metrics: {
+        AUC: AUC,
+        TTR50: TTR50,
+        finalResistantPct: (pop.length ? pop[pop.length - 1].resistantPct : 0)
+      }
+      // add pk/pop arrays later if needed
+    };
+    await addDoc(collection(db, "runs"), doc);
+    navigate("/runs");
+  }
+
   return (
     <div style={{minHeight:"100vh", display:"grid", gridTemplateColumns:"320px 1fr", background:"#0a0f1c", color:"#fff"}}>
       {/* Sidebar */}
@@ -293,6 +326,28 @@ export default function App() {
           <button onClick={downloadAll} style={{width:"100%", background:"transparent", border:"1px solid rgba(255,255,255,0.3)", color:"#fff", borderRadius:8, padding:8}}>
             {text[lang].export}
           </button>
+
+          {/* NEW: save + auth section */}
+          {user ? (
+            <div style={{marginTop:10, display:"grid", gap:8}}>
+              <button onClick={saveCurrentRun} style={{width:"100%", background:"#16a34a", color:"#fff", border:"none", borderRadius:8, padding:8}}>
+                {text[lang].saveRun}
+              </button>
+              <div style={{display:"flex", justifyContent:"space-between", fontSize:12, opacity:0.85}}>
+                <span>{text[lang].signedInAs} {user.email}</span>
+                <button onClick={logout} style={{background:"transparent", border:"1px solid rgba(255,255,255,0.3)", color:"#fff", borderRadius:6, padding:"2px 8px"}}>
+                  Sign out
+                </button>
+              </div>
+              <Link to="/runs" style={{color:"#67e8f9", fontSize:12, textDecoration:"underline"}}>My Runs</Link>
+            </div>
+          ) : (
+            <div style={{marginTop:10}}>
+              <Link to="/login" style={{display:"inline-block", background:"#6366f1", color:"#fff", padding:"8px 12px", borderRadius:8}}>
+                {text[lang].signInToSave}
+              </Link>
+            </div>
+          )}
         </div>
       </aside>
 
