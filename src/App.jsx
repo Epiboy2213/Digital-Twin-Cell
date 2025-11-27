@@ -391,31 +391,98 @@ export default function App() {
 
         {/* OVERVIEW */}
         {tab === "overview" && (
-          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
-            <Card title={<><Activity size={16}/> Population vs Time</>} height={280}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={pop}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)"/>
-                  <XAxis dataKey="t" stroke="#9ca3af"/><YAxis stroke="#9ca3af"/>
-                  <Tooltip contentStyle={{background:"#0e1830", border:"1px solid rgba(255,255,255,0.1)", color:"#fff"}}/>
-                  <Area type="monotone" dataKey="population" stroke="#22d3ee" fill="#22d3ee40" name="Population"/>
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
+          <>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
+              <Card title={<><Activity size={16}/> Population vs Time</>} height={280}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={pop}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)"/>
+                    <XAxis dataKey="t" stroke="#9ca3af"/><YAxis stroke="#9ca3af"/>
+                    <Tooltip contentStyle={{background:"#0e1830", border:"1px solid rgba(255,255,255,0.1)", color:"#fff"}}/>
+                    <Area type="monotone" dataKey="population" stroke="#22d3ee" fill="#22d3ee40" name="Population"/>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Card>
 
-            <Card title={<><LineChart size={16}/> % Resistant vs Time</>} height={280}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RLineChart data={pop}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)"/>
-                  <XAxis dataKey="t" stroke="#9ca3af"/><YAxis stroke="#9ca3af"/>
-                  <Tooltip contentStyle={{background:"#0e1830", border:"1px solid rgba(255,255,255,0.1)", color:"#fff"}}/>
-                  <Legend />
-                  <Line type="monotone" dataKey="resistantPct" stroke="#f472b6" name="Resistant (%)"/>
-                  <Line type="monotone" dataKey="sensitivePct" stroke="#60a5fa" name="Sensitive (%)"/>
-                </RLineChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
+              <Card title={<><LineChart size={16}/> % Resistant vs Time</>} height={280}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RLineChart data={pop}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)"/>
+                    <XAxis dataKey="t" stroke="#9ca3af"/><YAxis stroke="#9ca3af"/>
+                    <Tooltip contentStyle={{background:"#0e1830", border:"1px solid rgba(255,255,255,0.1)", color:"#fff"}}/>
+                    <Legend />
+                    <Line type="monotone" dataKey="resistantPct" stroke="#f472b6" name="Resistant (%)"/>
+                    <Line type="monotone" dataKey="sensitivePct" stroke="#60a5fa" name="Sensitive (%)"/>
+                  </RLineChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            {/* NEW: How to use card */}
+            <div style={{marginTop:12}}>
+              <Card
+                title={lang === "en" ? "How to use this dashboard" : "วิธีใช้งานแดชบอร์ดนี้"}
+                height={190}
+              >
+                <div style={{display:"grid", gridTemplateColumns:"2fr 1fr", gap:16, fontSize:12}}>
+                  <div>
+                    <h4 style={{margin:"0 0 6px 0", fontSize:13, fontWeight:600}}>
+                      {lang === "en" ? "Quick start" : "เริ่มต้นใช้งานอย่างรวดเร็ว"}
+                    </h4>
+                    <ol style={{margin:0, paddingLeft:18, lineHeight:1.6}}>
+                      <li>
+                        {lang === "en"
+                          ? "Choose the treatment scenario (control / continuous / pulsed) on the left."
+                          : "เลือกสถานการณ์การให้ยา (ไม่มียา / ให้ต่อเนื่อง / ให้ยา 3 วัน หยุด 1 วัน) จากแถบด้านซ้าย"}
+                      </li>
+                      <li>
+                        {lang === "en"
+                          ? "Adjust Dose, Half-life, IC50 and Emax, then click RUN to simulate."
+                          : "ปรับค่า ขนาดยา ครึ่งชีวิตยา IC50 และ Emax จากนั้นกดปุ่ม เริ่มจำลอง (RUN)"}
+                      </li>
+                      <li>
+                        {lang === "en"
+                          ? "Read the population curve on the left and the % resistant curve on the right."
+                          : "ดูกราฟจำนวนเซลล์รวมด้านซ้าย และกราฟเปอร์เซ็นต์เซลล์ดื้อยา/ไวต่อยาด้านขวา"}
+                      </li>
+                      <li>
+                        {lang === "en"
+                          ? "Use other tabs (PK/PD, Population, Metrics, 3D Tumor) for deeper analysis."
+                          : "สลับไปแท็บอื่น ๆ (PK/PD, ประชากร, ตัวชี้วัด, เนื้องอก 3 มิติ) เพื่อวิเคราะห์เชิงลึกเพิ่มเติม"}
+                      </li>
+                    </ol>
+                  </div>
+                  <div style={{
+                    borderRadius:10,
+                    padding:"10px 12px",
+                    background:"rgba(15,23,42,0.8)",
+                    border:"1px dashed rgba(148,163,184,0.6)"
+                  }}>
+                    <h4 style={{margin:"0 0 6px 0", fontSize:13, fontWeight:600}}>
+                      {lang === "en" ? "Tips" : "เคล็ดลับการอ่านผล"}
+                    </h4>
+                    <ul style={{margin:0, paddingLeft:16, lineHeight:1.5}}>
+                      <li>
+                        {lang === "en"
+                          ? "Lower and flatter population curve → better tumor control."
+                          : "กราฟจำนวนเซลล์ต่ำและแบนลง แปลว่าควบคุมเนื้องอกได้ดีขึ้น"}
+                      </li>
+                      <li>
+                        {lang === "en"
+                          ? "Slower rise in % resistant → slower resistance evolution."
+                          : "กราฟ % ดื้อยาขึ้นช้าหรือไม่ชันมาก แปลว่าการดื้อยาพัฒนาได้ช้าลง"}
+                      </li>
+                      <li>
+                        {lang === "en"
+                          ? "Save interesting runs to the cloud (if signed in) and compare later."
+                          : "หากลงชื่อเข้าใช้แล้ว สามารถบันทึกการจำลองที่น่าสนใจเก็บไว้เปรียบเทียบภายหลังได้"}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </>
         )}
 
         {/* PK/PD */}
