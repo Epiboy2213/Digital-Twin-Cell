@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+
 import {
   AreaChart,
   Area,
@@ -57,7 +58,7 @@ function timeToResistance(series, threshold = 50) {
 
 /* ------------------ simulation core ------------------ */
 function simulate({ scenario, dose, halfLife, IC50, Emax, mode }) {
-  const T = mode === "quick" ? 40 : 80; // time steps
+  const T = 80; // time steps
   const dt = 1;
   const hill = 1.2;
   const k = Math.log(2) / Math.max(halfLife, 0.1);
@@ -203,7 +204,7 @@ export default function App() {
       },
       mode: "Mode",
       modeQuick: "Quick",
-      modeDetailed: "Detailed",
+      modeDetailed: "High fidelity",
       run: "Run",
       running: "Running...",
       export: "Export CSV",
@@ -220,9 +221,29 @@ export default function App() {
     },
   };
 
+  /* NEW: helper text for parameters (tooltip) */
+  const paramHelp = {
+    dose: {
+      th: "ขนาดยาที่ให้ในแต่ละรอบ ยิ่งสูงยิ่งกดการเติบโตของเซลล์ได้มาก แต่ก็อาจเร่งให้เกิดการดื้อยาในบางรูปแบบ",
+      en: "Dose per administration. Higher dose can suppress tumor growth more, but may also speed up resistance in some regimens.",
+    },
+    halfLife: {
+      th: "เวลาที่ความเข้มข้นยาลดลงเหลือครึ่งหนึ่งในร่างกาย มีผลต่อการสะสมของยา",
+      en: "Time for the drug concentration to fall to half in the body; controls how long drug stays in the system.",
+    },
+    ic50: {
+      th: "ความเข้มข้นยาที่ทำให้การเติบโตของเซลล์ถูกยับยั้ง 50% ยิ่งต่ำยิ่งแปลว่ายาแรง",
+      en: "Drug concentration that inhibits 50% of cell growth. Lower IC50 means higher potency.",
+    },
+    emax: {
+      th: "ประสิทธิภาพสูงสุดของยา (0–1) ว่ายาจะกดการเติบโตได้มากสุดแค่ไหน",
+      en: "Maximum effect (0–1) describing how strongly the drug can inhibit growth at high concentrations.",
+    },
+  };
+
   /* Inputs (left sidebar) */
   const [scenarioInput, setScenarioInput] = useState("pulsed");
-  const [modeInput, setModeInput] = useState("quick");
+  const [modeInput, setModeInput] = useState("detailed");
   const [doseInput, setDoseInput] = useState(50);
   const [halfLifeInput, setHalfLifeInput] = useState(10);
   const [IC50Input, setIC50Input] = useState(0.5);
@@ -230,7 +251,7 @@ export default function App() {
 
   /* Applied (used for simulate) */
   const [scenario, setScenario] = useState("pulsed");
-  const [mode, setMode] = useState("quick");
+  const [mode, setMode] = useState("detailed");
   const [dose, setDose] = useState(50);
   const [halfLife, setHalfLife] = useState(10);
   const [IC50, setIC50] = useState(0.5);
@@ -282,6 +303,16 @@ export default function App() {
       };
     });
     downloadCSV("simulation_" + scenario + "_" + mode + ".csv", rows);
+  };
+
+  /* NEW: reset to default parameters */
+  const resetDefaults = function () {
+    setScenarioInput("pulsed");
+    setModeInput("detailed");
+    setDoseInput(50);
+    setHalfLifeInput(10);
+    setIC50Input(0.5);
+    setEmaxInput(0.9);
   };
 
   const [tab, setTab] = useState("overview");
@@ -421,7 +452,10 @@ export default function App() {
           </select>
 
           <label style={{ fontSize: 12 }}>
-            {text[lang].dose}: {doseInput}
+            <ParamLabel
+              text={`${text[lang].dose}: ${doseInput}`}
+              hint={paramHelp.dose[lang]}
+            />
           </label>
           <input
             type="range"
@@ -433,7 +467,12 @@ export default function App() {
             style={{ width: "100%", marginBottom: 8 }}
           />
 
-          <label style={{ fontSize: 12 }}>{text[lang].halfLife}</label>
+          <label style={{ fontSize: 12 }}>
+            <ParamLabel
+              text={text[lang].halfLife}
+              hint={paramHelp.halfLife[lang]}
+            />
+          </label>
           <input
             value={halfLifeInput}
             onChange={(e) => setHalfLifeInput(e.target.value)}
@@ -447,7 +486,12 @@ export default function App() {
             }}
           />
 
-          <label style={{ fontSize: 12 }}>{text[lang].ic50}</label>
+          <label style={{ fontSize: 12 }}>
+            <ParamLabel
+              text={text[lang].ic50}
+              hint={paramHelp.ic50[lang]}
+            />
+          </label>
           <input
             value={IC50Input}
             onChange={(e) => setIC50Input(e.target.value)}
@@ -461,7 +505,12 @@ export default function App() {
             }}
           />
 
-          <label style={{ fontSize: 12 }}>{text[lang].emax}</label>
+          <label style={{ fontSize: 12 }}>
+            <ParamLabel
+              text={text[lang].emax}
+              hint={paramHelp.emax[lang]}
+            />
+          </label>
           <input
             value={EmaxInput}
             onChange={(e) => setEmaxInput(e.target.value)}
@@ -474,37 +523,6 @@ export default function App() {
               color: "#fff",
             }}
           />
-
-          <div style={{ marginBottom: 10 }}>
-            <span style={{ fontSize: 12 }}>{text[lang].mode}</span>
-            <br />
-            <button
-              onClick={() => setModeInput("quick")}
-              style={{
-                padding: "4px 8px",
-                margin: 2,
-                background:
-                  modeInput === "quick" ? "#0891b2" : "transparent",
-                color: "#fff",
-                borderRadius: 8,
-              }}
-            >
-              ⚡ {text[lang].modeQuick}
-            </button>
-            <button
-              onClick={() => setModeInput("detailed")}
-              style={{
-                padding: "4px 8px",
-                margin: 2,
-                background:
-                  modeInput === "detailed" ? "#7c3aed" : "transparent",
-                color: "#fff",
-                borderRadius: 8,
-              }}
-            >
-              🔬 {text[lang].modeDetailed}
-            </button>
-          </div>
 
           <button
             onClick={onRun}
@@ -533,6 +551,23 @@ export default function App() {
             }}
           >
             {text[lang].export}
+          </button>
+
+          {/* NEW: reset to default */}
+          <button
+            onClick={resetDefaults}
+            style={{
+              width: "100%",
+              marginTop: 6,
+              background: "transparent",
+              border: "1px dashed rgba(148,163,184,0.7)",
+              color: "#e5e7eb",
+              borderRadius: 8,
+              padding: 6,
+              fontSize: 12,
+            }}
+          >
+            {lang === "en" ? "Reset to default" : "รีเซ็ตค่ามาตรฐาน"}
           </button>
 
           {/* save + auth section */}
@@ -1005,53 +1040,95 @@ export default function App() {
 
         {/* METRICS */}
         {tab === "metrics" && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 12,
-            }}
-          >
-            <Card title="AUC (pop vs t)" height={120}>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>
-                {AUC.toLocaleString()}
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
-                arbitrary units
-              </div>
-            </Card>
-            <Card title="TTR ≥50% Resistant" height={120}>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>
-                {TTR50 !== null ? TTR50 : "—"}
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
-                time step
-              </div>
-            </Card>
-            <Card title="Final % Resistant" height={120}>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>
-                {(last.resistantPct || 0).toFixed(2)}%
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
-                at end of run
-              </div>
-            </Card>
-          </div>
+          <>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 12,
+              }}
+            >
+              <Card title="AUC (pop vs t)" height={120}>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>
+                  {AUC.toLocaleString()}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.7)",
+                  }}
+                >
+                  arbitrary units
+                </div>
+              </Card>
+              <Card title="TTR ≥50% Resistant" height={120}>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>
+                  {TTR50 !== null ? TTR50 : "—"}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.7)",
+                  }}
+                >
+                  time step
+                </div>
+              </Card>
+              <Card title="Final % Resistant" height={120}>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>
+                  {(last.resistantPct || 0).toFixed(2)}%
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.7)",
+                  }}
+                >
+                  at end of run
+                </div>
+              </Card>
+            </div>
+
+            {/* Summary interpretation */}
+            <div
+              style={{
+                marginTop: 12,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px dashed rgba(148,163,184,0.7)",
+                background: "rgba(15,23,42,0.7)",
+                fontSize: 12,
+                color: "rgba(226,232,240,0.9)",
+                lineHeight: 1.6,
+              }}
+            >
+              {lang === "en" ? (
+                <>
+                  <strong>Interpretation:</strong>{" "}
+                  {AUC < 500000
+                    ? "Overall tumor burden is relatively well-controlled in this regimen."
+                    : "Overall tumor burden remains relatively high in this regimen."}{" "}
+                  {TTR50 !== null
+                    ? `Resistance reaches 50% around t = ${TTR50},`
+                    : "Resistance does not reach 50% within the simulated window,"}{" "}
+                  and the final fraction of resistant cells is{" "}
+                  {(last.resistantPct || 0).toFixed(1)}%.
+                </>
+              ) : (
+                <>
+                  <strong>การแปลผลโดยสรุป:</strong>{" "}
+                  {AUC < 500000
+                    ? "โดยรวมแล้วขนาดเนื้องอกถูกควบคุมได้ค่อนข้างดีในรูปแบบการให้ยานี้"
+                    : "ขนาดเนื้องอกโดยรวมยังค่อนข้างสูงในรูปแบบการให้ยานี้"}{" "}
+                  {TTR50 !== null
+                    ? `เซลล์ดื้อยามีสัดส่วนถึง 50% ประมาณ t = ${TTR50}`
+                    : "สัดส่วนเซลล์ดื้อยาไม่ถึง 50% ภายในช่วงเวลาที่จำลอง"}{" "}
+                  และมีสัดส่วนเซลล์ดื้อยาสุดท้ายประมาณ{" "}
+                  {(last.resistantPct || 0).toFixed(1)}%
+                </>
+              )}
+            </div>
+          </>
         )}
 
         {/* 3D TUMOR */}
@@ -1448,7 +1525,9 @@ export default function App() {
             {/* Equations */}
             <Card
               title={
-                lang === "en" ? "Key Equations used in the model" : "สมการที่ใช้ในงานนี้"
+                lang === "en"
+                  ? "Key Equations used in the model"
+                  : "สมการที่ใช้ในงานนี้"
               }
               height="auto"
             >
@@ -1682,5 +1761,31 @@ function Card({ title, height = 240, children }) {
       </div>
       <div style={{ height: height }}>{children}</div>
     </div>
+  );
+}
+
+/* -------- small helper label with tooltip -------- */
+function ParamLabel({ text, hint }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+      {text}
+      <span
+        title={hint}
+        style={{
+          fontSize: 10,
+          width: 16,
+          height: 16,
+          borderRadius: "999px",
+          border: "1px solid rgba(148,163,184,0.9)",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "rgba(148,163,184,0.9)",
+          cursor: "help",
+        }}
+      >
+        i
+      </span>
+    </span>
   );
 }
