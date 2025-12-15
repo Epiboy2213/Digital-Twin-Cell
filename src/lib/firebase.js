@@ -5,8 +5,12 @@ import { getFirestore } from "firebase/firestore";
 
 // TODO: replace with your project's config from Firebase console
 const firebaseConfig = {
-  aapiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  apiKey: "AIzaSyAqLIrrvZqJ1Oy7Ot_9WKNTjQQZTod2FbI",
+  authDomain: "digitaltwincell.firebaseapp.com",
+  projectId: "digitaltwincell",
+  storageBucket: "digitaltwincell.firebasestorage.app",
+  messagingSenderId: "958981538408",
+  appId: "1:958981538408:web:4fc1ac9c8306265f7071dd",
 };
 
 const app = initializeApp(firebaseConfig);
